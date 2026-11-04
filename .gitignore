@@ -1,0 +1,109 @@
+# ==========================================
+# NODE.JS / NEXT.JS (Frontend)
+# ==========================================
+node_modules/
+.next/
+out/
+build/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================================
+# PYTHON / FASTAPI (Backend)
+# ==========================================
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# ==========================================
+# ENVIRONMENT VARIABLES (Keep these secret!)
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# LARAVEL (If you still have the old folder)
+# ==========================================
+/vendor
+/bootstrap/cache/*
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+/public/storage
+/public/hot
+/public_html
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# IDE / EDITORS
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# OS GENERATED
+# ==========================================
+Desktop.ini
+$RECYCLE.BIN/
