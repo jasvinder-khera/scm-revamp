@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { fetchFromApi } from "../../lib/api";
+import {
+  startLoginApi,
+  sendOtpApi,
+  verifyOtpApi,
+} from "../lib/apiEndpoints";
+import { isAuthenticated, setToken } from "../lib/auth";
+import { requestHandler } from "../lib/requestHandler";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,8 +22,20 @@ export default function LoginPage() {
   const [stampVisible, setStampVisible] = useState(false);
   const [timer, setTimer] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const otpRefs = useRef([]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    if (isAuthenticated()) {
+      router.replace("/dashboard");
+      return;
+    }
+
+    setAuthChecked(true);
+  }, [router, router.isReady]);
 
   // --- Timer Logic for Resend OTP ---
   useEffect(() => {
@@ -38,38 +56,27 @@ export default function LoginPage() {
     return `${m}:${s}`;
   };
 
+  if (!authChecked) return null;
+
   // --- API Calls ---
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      // 1. Verify Credentials
-      const credentials = `${email}:${password}`;
-      const encodedCredentials = btoa(credentials);
-
-      await fetchFromApi("/api/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }), // In FastAPI we just send standard JSON
-      });
-
-      // 2. Send OTP
-      await fetchFromApi("/api/send-otp", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-
-      setStep(2);
-      setStampVisible(true);
-      setTimer(300);
-      setCanResend(false);
-      setTimeout(() => otpRefs.current[0]?.focus(), 100);
-    } catch (err) {
-      setError(err.message || "Incorrect email or password.");
-    } finally {
-      setLoading(false);
-    }
+    await requestHandler(
+      () => startLoginApi(email, password),
+      setLoading,
+      () => {
+        setStep(2);
+        setStampVisible(true);
+        setTimer(300);
+        setCanResend(false);
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
+      },
+      setError,
+      "Login"
+    );
   };
 
   const handleVerifyOtp = async (e) => {
@@ -83,38 +90,38 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    try {
-      await fetchFromApi("/api/verify-otp", {
-        method: "POST",
-        body: JSON.stringify({ email, otp_code: code }),
-      });
-      
-      // On success, redirect to dashboard
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err.message || "That OTP is invalid or has expired.");
-    } finally {
-      setLoading(false);
-    }
+    await requestHandler(
+      () => verifyOtpApi(email, code),
+      setLoading,
+      (data) => {
+        if (!data?.access_token) {
+          setError("OTP was verified, but no access token was returned.");
+          return;
+        }
+
+        setToken(data.access_token);
+        router.push("/dashboard");
+      },
+      setError,
+      "OTP verification"
+    );
   };
 
   const handleResend = async () => {
     setError("");
     setCanResend(false);
     setLoading(true);
-    try {
-      await fetchFromApi("/api/send-otp", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-      setStampVisible(false);
-      setTimeout(() => setStampVisible(true), 50); // Re-trigger animation
-      setTimer(300);
-    } catch (err) {
-      setError("We could not resend the OTP.");
-    } finally {
-      setLoading(false);
-    }
+    await requestHandler(
+      () => sendOtpApi(email),
+      setLoading,
+      () => {
+        setStampVisible(false);
+        setTimeout(() => setStampVisible(true), 50);
+        setTimer(300);
+      },
+      () => setError("We could not resend the OTP."),
+      "Resend OTP"
+    );
   };
 
   // --- OTP Input Handlers ---

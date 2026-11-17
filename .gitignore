@@ -37,6 +37,11 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/lib/
+!frontend/lib/api.js
+!frontend/lib/apiEndpoints.js
+!frontend/lib/auth.js
+!frontend/lib/requestHandler.js
 lib64/
 parts/
 sdist/

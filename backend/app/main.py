@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import users,otp
+from app.api.routes import users,otp,dashboard
 
 app = FastAPI()
 
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(otp.router, prefix="/api", tags=["otp"])
+app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 
 @app.get("/api/test")
 def test_route():

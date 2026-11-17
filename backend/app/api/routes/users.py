@@ -6,9 +6,7 @@ from passlib.context import CryptContext
 from app.database import get_db
 from app import models
 from app.schemas.users import UserRegisterRequest
-from datetime import datetime, timedelta, timezone
-from jose import jwt
-from app.core.config import settings
+from app.core.security import create_access_token
 from app.schemas.users import UserLoginRequest, TokenResponse
 from app.api.deps import get_current_user
 # from app.utils.email import send_welcome_email  # We will create this next
@@ -77,13 +75,6 @@ def register_user(
         print(f"Registration Error: {e}") # Replace with a proper logger later
         raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
     
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
 @router.post("/login", response_model=TokenResponse)
 def login(user_in: UserLoginRequest, db: Session = Depends(get_db)):
     # 1. Find user by email
@@ -108,5 +99,7 @@ def get_my_profile(current_user: models.Users = Depends(get_current_user)):
     return {
         "id": current_user.id, 
         "email": current_user.email, 
-        "name": current_user.fname
+        "name": current_user.fname,
+        "user_role": current_user.user_role,          # <-- ADD THIS
+        "department_head": current_user.department_head # <-- ADD THIS
     }

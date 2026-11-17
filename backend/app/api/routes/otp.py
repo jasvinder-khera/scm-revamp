@@ -6,6 +6,7 @@ from app.database import get_db
 from app import models
 from app.schemas.users import OtpRequest, OtpVerifyRequest
 from app.utils.email import send_otp_email
+from app.core.security import create_access_token
 
 router = APIRouter()
 
@@ -59,4 +60,9 @@ def verify_otp(
 
     db.commit()
 
-    return {"message": "OTP verified successfully. You can now reset your password."}
+    access_token = create_access_token(data={"sub": str(user.id)})
+    return {
+        "message": "OTP verified successfully.",
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
