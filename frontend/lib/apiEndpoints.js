@@ -13,7 +13,14 @@ export function verifyOtpApi(email, otpCode) {
 }
 
 export async function startLoginApi(email, password) {
-  await loginApi(email, password);
+  // const payload = btoa(JSON.stringify({ email, password }));
+  const response = await loginApi(email, password);
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(
+      response.data?.detail || response.data?.message || "Invalid email or password"
+    );
+  }
+
   return sendOtpApi(email);
 }
 

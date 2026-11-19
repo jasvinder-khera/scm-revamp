@@ -79,10 +79,21 @@ def register_user(
 def login(user_in: UserLoginRequest, db: Session = Depends(get_db)):
     # 1. Find user by email
     user = db.query(models.Users).filter(models.Users.email == user_in.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password"
+        )
     
-    # 2. Check if user exists and password is correct
-    # Note: passlib handles the $2y$ Laravel hash automatically here
-    if not user or not pwd_context.verify(user_in.password, user.password):
+    # Existing records may store Laravel's bcrypt hash in either column.
+    password_hashes = (user.password, user.pass_)
+    password_matches = any(
+        stored_hash
+        and pwd_context.identify(stored_hash) == "bcrypt"
+        and pwd_context.verify(user_in.password, stored_hash)
+        for stored_hash in password_hashes
+    )
+    if not password_matches:
         raise HTTPException(
             status_code=401,
             detail="Incorrect email or password"
@@ -99,7 +110,9 @@ def get_my_profile(current_user: models.Users = Depends(get_current_user)):
     return {
         "id": current_user.id, 
         "email": current_user.email, 
-        "name": current_user.fname,
+        "fname":current_user.fname,
+        "lname": current_user.lname,
+        "group_field": current_user.group_field_id,
         "user_role": current_user.user_role,          # <-- ADD THIS
         "department_head": current_user.department_head # <-- ADD THIS
     }

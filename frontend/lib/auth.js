@@ -9,8 +9,7 @@ export async function login(email, password) {
       throw new Error(data?.detail || data?.message || "Login failed");
     }
     
-    // Save token to localStorage
-    localStorage.setItem("token", data.access_token);
+    setToken(data.access_token);
     return { success: true };
   } catch (error) {
     return { success: false, error: "Invalid email or password" };
@@ -19,6 +18,7 @@ export async function login(email, password) {
 
 export function logout() {
   localStorage.removeItem("token");
+  localStorage.removeItem("currentUserProfile");
   window.location.href = "/login";
 }
 
@@ -31,6 +31,7 @@ export function getToken() {
 
 export function setToken(token) {
   localStorage.setItem("token", token);
+  localStorage.removeItem("currentUserProfile");
 }
 
 export function isAuthenticated() {

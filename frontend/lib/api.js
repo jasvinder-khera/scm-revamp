@@ -5,7 +5,7 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  request(endpoint, options = {}) {
+  async request(endpoint, options = {}) {
     return fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
@@ -42,6 +42,8 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+const CURRENT_USER_CACHE_KEY = "currentUserProfile";
+let currentUserRequest = null;
 
 function getAuthorizationHeaders() {
   if (typeof window === "undefined") return {};
@@ -60,8 +62,72 @@ function getDashboardEndpoint(path, startDate, endDate) {
   });
 }
 
-export function getCurrentUserApi() {
-  return apiClient.get("/api/me", { headers: getAuthorizationHeaders() });
+export function getCurrentUserApi({ refresh = false } = {}) {
+  if (typeof window === "undefined") {
+    return apiClient.get("/api/me", { headers: getAuthorizationHeaders() });
+  }
+
+  const token = window.localStorage.getItem("token");
+  if (token && !refresh) {
+    const cachedValue = window.localStorage.getItem(CURRENT_USER_CACHE_KEY);
+    if (cachedValue) {
+      let cached;
+      try {
+        cached = JSON.parse(cachedValue);
+      } catch {
+        cached = null;
+      }
+      if (cached?.token === token && cached.data) {
+        return Promise.resolve({ data: cached.data, status: 200 });
+      }
+      window.localStorage.removeItem(CURRENT_USER_CACHE_KEY);
+    }
+  }
+
+  if (currentUserRequest?.token === token) return currentUserRequest.promise;
+
+  const request = apiClient
+    .get("/api/me", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    .then((response) => {
+      if (response.status >= 200 && response.status < 300) {
+        if (token && window.localStorage.getItem("token") === token) {
+          window.localStorage.setItem(
+            CURRENT_USER_CACHE_KEY,
+            JSON.stringify({ token, data: response.data }),
+          );
+        }
+      } else if (response.status === 401) {
+        window.localStorage.removeItem(CURRENT_USER_CACHE_KEY);
+      }
+      return response;
+    })
+    .finally(() => {
+      if (currentUserRequest?.promise === request) {
+        currentUserRequest = null;
+      }
+    });
+
+  currentUserRequest = { token, promise: request };
+  return request;
+}
+
+export function getAllPurchaseRequests(
+  bid,
+  { start = 0, length = 5, draw = 0, search = "" } = {},
+) {
+  const params = new URLSearchParams({
+    start: String(start),
+    length: String(length),
+    draw: String(draw),
+  });
+  if (search) params.set("search[value]", search);
+
+  return apiClient.get(
+    `/api/purchase-requests/${encodeURIComponent(bid)}?${params}`,
+    { headers: getAuthorizationHeaders() },
+  );
 }
 
 export function getDashboardStats(startDate, endDate) {
