@@ -39,6 +39,18 @@ export class ApiClient {
       body: JSON.stringify(body),
     });
   }
+
+  postText(endpoint, body, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: "POST",
+      body,
+      headers: {
+        "Content-Type": "text/plain",
+        ...options.headers,
+      },
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

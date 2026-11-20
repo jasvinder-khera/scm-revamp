@@ -7,7 +7,7 @@ import Layout from "../components/Layout";
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const isAuthenticationPage = ["/login", "/register"].includes(router.pathname);
+  const isAuthenticationPage = ["/login", "/register", "/reset-password"].includes(router.pathname);
 
   return (
     <>

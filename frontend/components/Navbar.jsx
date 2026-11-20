@@ -130,7 +130,7 @@ export default function Navbar({ isSidebarOpen, onToggleSidebar }) {
             {user?.fname?.[0]}
             {user?.lname?.[0]}
           </div>
-          <div className="flex flex-col items-start">
+          <div className="hidden md:flex flex-col items-start">
             <span className="capitalize">
               {user?.fname + " " + user?.lname ||
                 (profileError ? "Profile unavailable" : "Loading account...")}

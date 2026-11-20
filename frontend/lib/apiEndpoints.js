@@ -1,7 +1,20 @@
 import { apiClient } from "./api";
 
+function encodeLoginPayload(email, password) {
+  const credentials = JSON.stringify({ email, password });
+  const bytes = new TextEncoder().encode(credentials);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
 export function loginApi(email, password) {
-  return apiClient.post("/api/login", { email, password });
+  return apiClient.postText(
+    "/api/login",
+    encodeLoginPayload(email, password),
+  );
 }
 
 export function sendOtpApi(email) {
@@ -13,7 +26,6 @@ export function verifyOtpApi(email, otpCode) {
 }
 
 export async function startLoginApi(email, password) {
-  // const payload = btoa(JSON.stringify({ email, password }));
   const response = await loginApi(email, password);
   if (response.status < 200 || response.status >= 300) {
     throw new Error(

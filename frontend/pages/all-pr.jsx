@@ -31,6 +31,7 @@ export default function AllPRs() {
   const [totalRows, setTotalRows] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const Priority = {
     1: "Low",
@@ -75,6 +76,11 @@ export default function AllPRs() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+  const timer = setTimeout(() => setDebouncedSearch(search), 400);
+  return () => clearTimeout(timer);
+}, [search]);
 
   useEffect(() => {
     if (!bid) return undefined;
@@ -134,7 +140,7 @@ export default function AllPRs() {
       active = false;
       clearTimeout(timer);
     };
-  }, [bid, currentPage, pageSize, search]);
+  }, [bid, currentPage, pageSize, debouncedSearch]);
 
   return (
     <div className="mx-auto max-w-[1600px] p-6">

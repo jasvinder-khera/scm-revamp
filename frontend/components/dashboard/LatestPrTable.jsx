@@ -1,11 +1,12 @@
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function LatestPrTable({ purchaseRequests }) {
   return (
     <div className="bg-white border border-gray-200 h-full flex flex-col">
       <div className="border-b border-gray-200 px-4 py-2 bg-[#f8f8f8] flex justify-between items-center">
         <h3 className="text-sm font-bold text-gray-800">Latest Purchase Requests</h3>
-        <a href="/purreq" className="text-xs text-blue-600 font-semibold hover:underline">View All</a>
+        <Link href="/all-pr" className="text-xs text-blue-600 font-semibold hover:underline">View All</Link>
       </div>
       
       <div className="overflow-auto flex-grow">

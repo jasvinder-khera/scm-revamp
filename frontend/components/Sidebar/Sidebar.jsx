@@ -300,7 +300,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
         className={`fixed left-0 top-[4.5rem] z-40 flex h-[calc(100vh-4.5rem)] flex-col bg-[#212e44] shadow-xl transition-all duration-300 ease-in-out ${
           isOpen
             ? "w-64 translate-x-0"
-            : "w-0 -translate-x-full lg:w-20 lg:translate-x-0"
+            : "w-0 -translate-x-full lg:w-0 lg:translate-x-0"
         }`}
       >
         <div className="flex items-center justify-center h-full">
@@ -326,7 +326,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
         className={`fixed left-0 top-[4.5rem] z-40 flex h-[calc(100vh-4.5rem)] flex-col border-r border-gray-700 bg-[#212e44] shadow-2xl transition-all duration-300 ease-in-out ${
           isOpen
             ? "w-64 translate-x-0"
-            : "w-0 -translate-x-full lg:w-20 lg:translate-x-0"
+            : "w-0 -translate-x-full lg:w-0 lg:translate-x-0"
         }`}
       >
         <nav className={`flex-1 overflow-y-auto py-4  scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent ${isOpen ? "px-3" : "px-0"}`}>
@@ -417,7 +417,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
 
                             {/* Dropdown Sub-items */}
                             {isOpen && isExpanded && (
-                              <ul className="ml-8 mt-1 space-y-1 transition-all duration-300 ease-in-out">
+                              <ul className="mt-1 space-y-1 transition-all duration-300 ease-in-out">
                                 {item.items.map((subItem) => {
                                   const isSubActive = activeItem === subItem.id;
                                   return (
@@ -429,8 +429,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
                                         }
                                         className={`
                                             group relative flex items-center w-full px-3 py-2
-                                            text-sm font-medium rounded-lg transition-all duration-300
-                                            ${isMobile ? "text-base py-2.5" : "text-sm py-2"}
+                                            text-xs font-medium rounded-lg transition-all duration-300
+                                            ${isMobile ? "text-xs py-2.5" : "text-xs py-2"}
                                             ${
                                               isSubActive
                                                 ? "text-white bg-white/5"
@@ -450,7 +450,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
                                             )}
                                           </span>
 
-                                          <span className="relative z-10 whitespace-nowrap capitalize text-sm">
+                                          <span className="relative z-10 whitespace-nowrap capitalize text-xs">
                                             {subItem.label}
                                           </span>
                                       </Link>

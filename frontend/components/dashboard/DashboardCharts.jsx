@@ -113,7 +113,7 @@ export default function DashboardCharts({ data }) {
       <div className="border border-gray-200 bg-white">
         <div className="flex items-center justify-between border-b border-gray-200 bg-[#f8f8f8] px-4 py-2">
           <h3 className="text-sm font-bold text-gray-800">Buyerwise PR Analysis</h3>
-          <span className="text-xs text-gray-500">Selected date range</span>
+          <span className="text-xs text-gray-500"></span>
         </div>
         <div className="p-4">
           <div ref={barRef} role="img" aria-label="Buyerwise purchase request analysis chart" style={{ width: "100%", height: 300 }} />

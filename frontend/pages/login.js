@@ -7,6 +7,7 @@ import {
 } from "../lib/apiEndpoints";
 import { isAuthenticated, setToken } from "../lib/auth";
 import { requestHandler } from "../lib/requestHandler";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -347,7 +348,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-center mt-8 text-sm">
-            <a href="#" className="text-[#16304f] hover:text-[#c98a3f] underline">Forgotten Password?</a>
+            <Link href="/reset-password" className="text-[#16304f] hover:text-[#c98a3f] underline">Forgotten Password?</Link>
           </p>
 
           <p className="text-center text-[11px] text-[#5c6b7d] mt-8">

@@ -1,6 +1,9 @@
+import base64
+import binascii
+import json
 import secrets
 import string
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.database import get_db
@@ -75,17 +78,28 @@ def register_user(
         print(f"Registration Error: {e}") # Replace with a proper logger later
         raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
     
+def decode_login_payload(raw: str) -> dict:
+    try:
+        decoded = base64.b64decode(raw, validate=True).decode("utf-8")
+        data = json.loads(decoded)
+    except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
+        raise HTTPException(status_code=400, detail="Malformed login payload")
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Malformed login payload")
+    return data
+    
 @router.post("/login", response_model=TokenResponse)
-def login(user_in: UserLoginRequest, db: Session = Depends(get_db)):
-    # 1. Find user by email
+def login(
+    raw_payload: str = Body(..., media_type="text/plain"),
+    db: Session = Depends(get_db),
+):
+    credentials = decode_login_payload(raw_payload)
+    user_in = UserLoginRequest(**credentials)
+
     user = db.query(models.Users).filter(models.Users.email == user_in.email).first()
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password"
-        )
-    
-    # Existing records may store Laravel's bcrypt hash in either column.
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+
     password_hashes = (user.password, user.pass_)
     password_matches = any(
         stored_hash
@@ -94,14 +108,9 @@ def login(user_in: UserLoginRequest, db: Session = Depends(get_db)):
         for stored_hash in password_hashes
     )
     if not password_matches:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password"
-        )
-    
-    # 3. Generate JWT Token (using user ID as the subject)
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+
     access_token = create_access_token(data={"sub": str(user.id)})
-    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")

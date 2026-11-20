@@ -18,7 +18,7 @@ export default function Layout({ children }) {
         <Sidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
         <main
           className={`min-h-[calc(100vh-4.5rem)] min-w-0 transition-[margin] duration-300 ${
-            isSidebarOpen ? "lg:ml-64" : "lg:ml-20"
+            isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
           }`}
         >
           {children}
