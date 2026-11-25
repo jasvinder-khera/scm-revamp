@@ -1,6 +1,9 @@
 import os
 import random
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from datetime import datetime, timezone
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models
@@ -40,27 +43,57 @@ def send_otp(
 
 @router.post("/verify-otp")
 def verify_otp(
-    request: OtpVerifyRequest,
-    db: Session = Depends(get_db)
+    otp_request: OtpVerifyRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
 ):
-    # 1. Find the user with the matching email AND OTP code
+    # Find and lock the active user so an OTP cannot be consumed twice concurrently.
     user = db.query(models.Users).filter(
-        models.Users.email == request.email,
-        models.Users.otp == request.otp_code
-    ).first()
+        models.Users.email == otp_request.email,
+        models.Users.otp == otp_request.otp_code,
+        models.Users.df == 0,
+    ).with_for_update().first()
 
     if not user:
         raise HTTPException(status_code=400, detail="Invalid OTP code")
 
-    # 2. Clear the OTP so it can't be reused
-    user.otp = None
-    
-    # Optional: If your Laravel app uses 'email_verified_at', you can set it here
-    # user.email_verified_at = datetime.now() 
+    try:
+        user_role = int(user.user_role)
+    except (TypeError, ValueError) as error:
+        raise HTTPException(status_code=403, detail="Unauthorized role") from error
 
+    logged_in_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    session_id = uuid4().hex
+
+    db.query(models.UserLoginLogs).filter(
+        models.UserLoginLogs.userId == user.id,
+        models.UserLoginLogs.loggedOutAt.is_(None),
+    ).update(
+        {
+            models.UserLoginLogs.loggedOutAt: logged_in_at,
+            models.UserLoginLogs.autoLoggedOut: "Auto",
+        },
+        synchronize_session=False,
+    )
+
+    user.otp = None
+    access_token = create_access_token(
+        data={"sub": str(user.id), "jti": session_id}
+    )
+    db.add(
+        models.UserLoginLogs(
+            userId=user.id,
+            name=" ".join(name for name in (user.fname, user.lname) if name),
+            hin_id=user.hin_id,
+            role=user_role,
+            ip_address=http_request.client.host if http_request.client else None,
+            email=user.email,
+            loggedInAt=logged_in_at,
+            session_id=session_id,
+        )
+    )
     db.commit()
 
-    access_token = create_access_token(data={"sub": str(user.id)})
     return {
         "message": "OTP verified successfully.",
         "access_token": access_token,

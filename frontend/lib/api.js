@@ -6,10 +6,12 @@ export class ApiClient {
   }
 
   async request(endpoint, options = {}) {
+    const isFormData =
+      typeof FormData !== "undefined" && options.body instanceof FormData;
     return fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...options.headers,
       },
     }).then(async (response) => {
@@ -37,6 +39,14 @@ export class ApiClient {
       ...options,
       method: "POST",
       body: JSON.stringify(body),
+    });
+  }
+
+  postForm(endpoint, body, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: "POST",
+      body,
     });
   }
 
@@ -140,6 +150,69 @@ export function getAllPurchaseRequests(
     `/api/purchase-requests/${encodeURIComponent(bid)}?${params}`,
     { headers: getAuthorizationHeaders() },
   );
+}
+export function getAllUsersList(
+  bid,
+  { start = 0, length = 5, draw = 0, search = "" } = {},
+) {
+  const params = new URLSearchParams({
+    start: String(start),
+    length: String(length),
+    draw: String(draw),
+  });
+  if (search) params.set("search[value]", search);
+
+  return apiClient.get(
+    `/api/user-list`,
+    { headers: getAuthorizationHeaders() },
+  );
+}
+export function getAllPurchaseRequestLineItems(
+  bid,
+  { start = 0, length = 5, draw = 0, search = "" } = {},
+) {
+  const params = new URLSearchParams({
+    start: String(start),
+    length: String(length),
+    draw: String(draw),
+  });
+  if (search) params.set("search[value]", search);
+
+  return apiClient.get(
+    `/api/purchase-requests/${encodeURIComponent(bid)}/line-items?${params}`,
+    { headers: getAuthorizationHeaders() },
+  );
+}
+export function getDeletedPurchaseRequests(
+  { start = 0, length = 5, draw = 0, search = "" } = {},
+) {
+  const params = new URLSearchParams({
+    start: String(start),
+    length: String(length),
+    draw: String(draw),
+  });
+  if (search) params.set("search[value]", search);
+
+  return apiClient.get(
+    `/api/deleted-purchase-requests?${params}`,
+    { headers: getAuthorizationHeaders() },
+  );
+}
+
+export function getRaisePurchaseRequestOptions() {
+  return apiClient.get("/api/raise-pr/options", {
+    headers: getAuthorizationHeaders(),
+  });
+}
+
+export function submitPurchaseRequest(request, attachment) {
+  const formData = new FormData();
+  formData.append("request_data", JSON.stringify(request));
+  if (attachment) formData.append("attachment", attachment);
+
+  return apiClient.postForm("/api/purchase-requests", formData, {
+    headers: getAuthorizationHeaders(),
+  });
 }
 
 export function getDashboardStats(startDate, endDate) {

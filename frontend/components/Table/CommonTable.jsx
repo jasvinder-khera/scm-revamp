@@ -888,8 +888,8 @@ const CommonTable = ({
                                 path === "/group-field/group-field-list"
                                   ? item[column.key] === 1 ||
                                     item[column.key] === true
-                                    ? "Active"
-                                    : "Inactive"
+                                    ? "InActive"
+                                    : "Active"
                                   : item[column.key],
                               )}`}
                             >
@@ -900,8 +900,8 @@ const CommonTable = ({
                               path === "/category/category-list"
                                 ? item[column.key] === 1 ||
                                   item[column.key] === true
-                                  ? "Active"
-                                  : "Inactive"
+                                  ? "Inactive" 
+                                  : "Active"
                                 : getStatusDisplay(item[column.key])}
                             </span>
                           ) : (
@@ -960,7 +960,7 @@ const CommonTable = ({
                         </div>
                       </td> */}
 
-                      {(currentPath === "/user/user-list" ||
+                      {(
                         currentPath === "/group-field/group-field-list" ||
                         currentPath === "/category/category-list" ||
                         currentPath === "/creative-type/creative-type-list" ||

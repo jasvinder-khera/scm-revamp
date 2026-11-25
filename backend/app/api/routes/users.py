@@ -3,8 +3,9 @@ import binascii
 import json
 import secrets
 import string
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, String
 from passlib.context import CryptContext
 from app.database import get_db
 from app import models
@@ -112,6 +113,52 @@ def login(
 
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+ROLE_LABELS = {0: "Requestor", 1: "Buyer", 2: "Approver", 3: "Admin"}
+
+@router.get("/user-list")
+def user_list(
+    current_user: models.Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        user_role = int(current_user.user_role)
+    except (TypeError, ValueError) as error:
+        raise HTTPException(status_code=403, detail="Unauthorized role") from error
+
+    if user_role != 3:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can access the user list.",
+        )
+
+    users = models.Users
+    results = (
+        db.query(users)
+        .filter(or_(users.df == 0, users.df.is_(None)))
+        .order_by(users.id.desc())
+        .all()
+    )
+
+    data = [
+        {
+            "id": row.id,
+            "fname": row.fname,
+            "lname": row.lname,
+            "email": row.email,
+            "phone_no": row.phone_no,
+            "role": ROLE_LABELS.get(
+                int(row.user_role or 0), str(row.user_role)
+            ),
+            "group_field_id": row.group_field_id,
+            "created_at": row.created_at,
+            "status": row.df,
+        }
+        for row in results
+    ]
+
+    return {"data": data}
+        
 
 @router.get("/me")
 def get_my_profile(current_user: models.Users = Depends(get_current_user)):

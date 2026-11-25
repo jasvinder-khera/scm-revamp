@@ -21,6 +21,7 @@ yarn-error.log*
 # ==========================================
 # PYTHON / FASTAPI (Backend)
 # ==========================================
+storage/
 venv/
 .venv/
 env/

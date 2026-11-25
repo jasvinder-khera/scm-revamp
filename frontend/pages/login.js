@@ -8,6 +8,7 @@ import {
 import { isAuthenticated, setToken } from "../lib/auth";
 import { requestHandler } from "../lib/requestHandler";
 import Link from "next/link";
+import Loader from "../components/Loader/Loader";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,11 +20,13 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [error, setError] = useState("");
   const [stampVisible, setStampVisible] = useState(false);
   const [timer, setTimer] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const submittingRef = useRef(false);
 
   const otpRefs = useRef([]);
 
@@ -82,20 +85,24 @@ export default function LoginPage() {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;   // synchronous guard
+  submittingRef.current = true;
     setError("");
     const code = otp.join("");
     
     if (code.length !== 6) {
       setError("Enter all 6 digits of the OTP.");
+       submittingRef.current = false;  
       return;
     }
 
-    setLoading(true);
+    setOtpLoading(true);
     await requestHandler(
       () => verifyOtpApi(email, code),
-      setLoading,
+      setOtpLoading,
       (data) => {
         if (!data?.access_token) {
+          setOtpLoading(false);
           setError("OTP was verified, but no access token was returned.");
           return;
         }
@@ -103,12 +110,18 @@ export default function LoginPage() {
         setToken(data.access_token);
         router.push("/dashboard");
       },
-      setError,
+      (err) => {
+         submittingRef.current = false;  
+        setOtpLoading(false);
+        setError(err);
+      },
       "OTP verification"
     );
   };
 
   const handleResend = async () => {
+    if (submittingRef.current) return;
+  submittingRef.current = true;
     setError("");
     setCanResend(false);
     setLoading(true);
@@ -116,12 +129,16 @@ export default function LoginPage() {
       () => sendOtpApi(email),
       setLoading,
       () => {
+        submittingRef.current = false;
         setStampVisible(false);
         setTimeout(() => setStampVisible(true), 50);
         setTimer(300);
       },
-      () => setError("We could not resend the OTP."),
+      () => {
+        submittingRef.current = false;
+        setError("We could not resend the OTP."),
       "Resend OTP"
+      },
     );
   };
 
@@ -271,7 +288,13 @@ export default function LoginPage() {
 
           {/* STEP 2: OTP */}
           {step === 2 && (
-            <div>
+            <div className="relative">
+              {/* Full-screen loader overlay while verifying OTP */}
+              {otpLoading && (
+                <div className="fixed inset-0 z-50 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                  <Loader />
+                </div>
+              )}
               <p className="font-['IBM_Plex_Mono',monospace] text-[11px] tracking-[0.16em] uppercase text-[#a86f2c] mb-2 flex items-center gap-2 before:content-[''] before:w-4 before:h-[1px] before:bg-[#a86f2c]">
                 Step 02 &middot; Verify
               </p>
@@ -316,7 +339,7 @@ export default function LoginPage() {
                   <button 
                     type="button" 
                     onClick={handleResend}
-                    disabled={!canResend || loading}
+                    disabled={!canResend || loading || otpLoading}
                     className="text-[#a86f2c] font-semibold hover:underline disabled:text-[#5c6b7d] disabled:no-underline disabled:cursor-default"
                   >
                     Resend OTP
@@ -325,13 +348,13 @@ export default function LoginPage() {
 
                 <button 
                   type="submit" 
-                  disabled={loading}
+                  disabled={otpLoading}
                   className="w-full py-3 bg-[#0d1b2f] text-[#f6f3ec] rounded font-semibold text-sm hover:bg-[#16304f] transition-colors flex justify-center items-center gap-2 disabled:opacity-60"
                 >
-                  {loading ? (
+                  {otpLoading ? (
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   ) : null}
-                  {loading ? "Verifying..." : "Verify & sign in"}
+                  {otpLoading ? "Verifying..." : "Verify & sign in"}
                 </button>
               </form>
 
